@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Language Lab: 7 дней</title>
+<style>
+:root{--bg:#f4f1ea;--card:#fff;--tx:#1f2430;--mut:#6b7280;--ac:#2f6fed;--ok:#1e9e5a;--bad:#d64545;--bd:#e3ded2;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171f;--card:#1e222d;--tx:#eef0f5;--mut:#9aa3b2;--ac:#6c9bff;--ok:#43c283;--bad:#ef6b6b;--bd:#2e3442}}
+:root[data-theme="dark"]{--bg:#14171f;--card:#1e222d;--tx:#eef0f5;--mut:#9aa3b2;--ac:#6c9bff;--ok:#43c283;--bad:#ef6b6b;--bd:#2e3442}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:640px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:1.5rem;margin:0 0 4px}
+.sub{color:var(--mut);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:20px;margin-bottom:14px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
+.st{font-size:.85rem;font-weight:600}
+.tr{height:9px;background:var(--bd);border-radius:6px;overflow:hidden;margin-top:4px}
+.fl{height:100%;background:var(--ac);transition:width .4s,background .4s}
+.fl.low{background:var(--bad)}
+.days{display:flex;gap:6px;margin-bottom:14px}
+.d{flex:1;height:8px;border-radius:5px;background:var(--bd)}
+.d.on{background:var(--ac)}
+.rd{color:var(--mut);font-size:.85rem;margin:0 0 6px}
+.q{font-size:1.1rem;font-weight:600;margin:0 0 12px}
+.opt{display:block;width:100%;text-align:left;font:inherit;color:inherit;background:transparent;border:2px solid var(--bd);border-radius:12px;padding:12px 14px;margin-bottom:10px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--ac)}
+.res{margin:6px 0 14px;font-size:.95rem}
+.res small{color:var(--mut)}
+.btn{font:inherit;font-weight:600;background:var(--ac);color:#fff;border:0;border-radius:12px;padding:12px 20px;cursor:pointer}
+.big{font-size:3rem;margin:0}
+.hide{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🧪 Language Lab: 7 дней</h1>
+  <p class="sub">Игра по видео «Best way how to learn a foreign language: 7 quick tips»</p>
+
+  <div id="start" class="card">
+    <p class="big">📅</p>
+    <p>У тебя 7 дней, чтобы прокачать иностранный язык. Каждый день выбирай одно занятие из четырёх. Советы из видео сильно повышают навыки, а ошибочные занятия мешают. Повтор того же занятия даёт вдвое меньше пользы.</p>
+    <p class="sub">Цель: поднять все пять навыков как можно выше.</p>
+    <button class="btn" id="go">Начать неделю</button>
+  </div>
+
+  <div id="game" class="hide">
+    <div class="card"><div class="days" id="days"></div><div class="stats" id="stats"></div></div>
+    <div class="card">
+      <p class="rd" id="rd"></p>
+      <p class="q">Чем займёшься сегодня?</p>
+      <div id="opts"></div>
+      <div class="res hide" id="res"></div>
+      <button class="btn hide" id="next">Дальше →</button>
+    </div>
+  </div>
+
+  <div id="end" class="card hide">
+    <p class="big" id="em"></p>
+    <h2 id="title" style="margin:0 0 8px"></h2>
+    <p id="txt"></p>
+    <p class="sub" id="bonus"></p>
+    <button class="btn" id="again">Сыграть ещё раз</button>
+  </div>
+</div>
+
+<script>
+var SK=["Грамматика","Словарный запас","Произношение","Разговор","Уверенность"];
+// effects order: grammar, vocab, pronunciation, speaking, confidence
+var GOOD=[
+{n:"Серьёзно взяться за учёбу и использовать все материалы",e:[8,8,8,8,8],x:"Видео: к изучению языка надо относиться серьёзно, использовать материалы и стараться."},
+{n:"Заниматься по учебнику грамматики",e:[20,5,0,0,0],x:"Видео: бери учебник грамматики, а не разговорник, ведь он учит составлять собственные предложения."},
+{n:"Смотреть видео на YouTube с субтитрами",e:[0,20,5,0,0],x:"Видео: ролики на одном языке с субтитрами на другом помогают расширить словарный запас."},
+{n:"Читать местные газеты вслух",e:[0,5,20,0,0],x:"Видео: чтение вслух помогает привыкнуть к звукам и словам языка."},
+{n:"Встретиться с партнёром по языку, лучше с носителем",e:[0,0,5,20,0],x:"Видео: найди партнёра и проводи время с носителем, это улучшает разговорные навыки."},
+{n:"Говорить смело, не боясь ошибок и акцента",e:[0,0,0,5,20],x:"Видео: уверенность важна, а ошибки и акцент — нормальная часть обучения."}
+];
+var BAD=[
+{n:"Заучивать готовые фразы из разговорника",e:[-5,5,0,0,0],x:"Разговорник не учит составлять свои предложения, а видео советует учебник грамматики."},
+{n:"Молчать, пока язык не станет идеальным",e:[0,0,0,-5,-15],x:"Видео подчёркивает, что ошибки и акцент нормальны. Если молчать, уверенность падает."},
+{n:"Избегать носителей языка, чтобы не опозориться",e:[0,0,-5,-10,-5],x:"Видео, наоборот, советует проводить время с носителем языка."},
+{n:"Отложить занятия на завтра",e:[-3,-3,-3,-3,-3],x:"Видео требует серьёзного отношения и усилий."}
+];
+var v,day,used,locked;
+function $(x){return document.getElementById(x)}
+function show(x){["start","game","end"].forEach(function(k){$(k).classList.toggle("hide",k!==x)})}
+function sh(a){a=a.slice();for(var k=a.length-1;k>0;k--){var j=Math.floor(Math.random()*(k+1)),t=a[k];a[k]=a[j];a[j]=t}return a}
+function hud(){
+  $("days").innerHTML=[0,1,2,3,4,5,6].map(function(k){return '<div class="d'+(k<=day?" on":"")+'"></div>'}).join("");
+  $("stats").innerHTML=SK.map(function(s,k){var n=Math.max(0,Math.min(100,v[k]));
+    return '<div class="st">'+s+": "+n+'<div class="tr"><div class="fl'+(n<=15?" low":"")+'" style="width:'+n+'%"></div></div></div>'}).join("")}
+function start(){v=[20,20,20,20,20];day=0;used={};show("game");render()}
+function render(){
+  locked=false;hud();$("rd").textContent="День "+(day+1)+" из 7";
+  $("res").classList.add("hide");$("next").classList.add("hide");
+  var nGood=Math.random()<0.5?3:2;
+  var fresh=sh(GOOD.filter(function(g){return!used[g.n]})),old=sh(GOOD.filter(function(g){return used[g.n]}));
+  var good=fresh.concat(old).slice(0,nGood),bad=sh(BAD).slice(0,4-good.length);
+  var box=$("opts");box.innerHTML="";
+  sh(good.concat(bad)).forEach(function(o){var b=document.createElement("button");b.className="opt";b.textContent=o.n;b.onclick=function(){pick(o)};box.appendChild(b)});
+}
+function pick(o){
+  if(locked)return;locked=true;
+  var again=!!used[o.n],d=o.e.map(function(x){return again&&x>0?Math.round(x/2):x});
+  used[o.n]=1;
+  for(var k=0;k<5;k++)v[k]=Math.max(0,Math.min(100,v[k]+d[k]));
+  hud();
+  var ch=SK.map(function(s,k){return d[k]?s+" "+(d[k]>0?"+":"")+d[k]:""}).filter(Boolean).join(" · ");
+  $("opts").innerHTML="";
+  $("res").innerHTML="<b>"+o.n+"</b><br>"+o.x+(again?" (повтор, эффект вдвое слабее)":"")+"<br><small>"+ch+"</small>";
+  $("res").classList.remove("hide");
+  $("next").textContent=day===6?"Итог →":"Следующий день →";$("next").classList.remove("hide");
+}
+function finish(){
+  show("end");
+  var avg=Math.round(v.reduce(function(a,b){return a+b},0)/5),n=GOOD.filter(function(g){return used[g.n]}).length;
+  var t,em;
+  if(avg>=50){em="🏆";t="Polyglot!"}else if(avg>=38){em="🎓";t="Уверенный ученик"}else{em="📚";t="Только начало пути"}
+  $("em").textContent=em;$("title").textContent=t;
+  $("txt").textContent="Средний уровень навыков: "+avg+" из 100. Советов из видео использовано: "+n+" из "+GOOD.length+". "+(n<GOOD.length?"Попробуй за неделю опробовать все шесть, и результат вырастет.":"Ты применил все основные советы!");
+  $("bonus").textContent="В видео есть ещё шуточный совет от друга Виктора из Мексики про текилу. Это шутка, а не метод обучения.";
+}
+$("go").onclick=start;$("again").onclick=start;
+$("next").onclick=function(){if(day===6)finish();else{day++;render()}};
+</script>
+</body>
+</html>
